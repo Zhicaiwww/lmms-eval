@@ -3,7 +3,7 @@
 1. **增加 `pope_fs.yaml` 用于 fewshot 调试**
 
 2. **sampler**: 返回 fewshot doc (直接传 doc 而非 doc_id 适应跨 split/dataset 检索 doc？)
-   - 如果需要跨 split/dataset 检索 doc 则给 sampler 添加采样参数
+   - 如果需要跨 split/dataset 检索 doc 则给 sampler 添加采样参数 
 
 3. **fewshot_context**: 接受从 sampler 得到的 fewshot doc，并且传递给 `build_all_requests` 函数
 
