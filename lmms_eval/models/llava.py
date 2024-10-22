@@ -305,11 +305,19 @@ class Llava(lmms):
         num_iters = len(requests) // self.batch_size if len(requests) % self.batch_size == 0 else len(requests) // self.batch_size + 1
         pbar = tqdm(total=num_iters, disable=(self.rank != 0), desc="Model Responding")
         for chunk in chunks:
-            contexts, all_gen_kwargs, doc_to_visual, doc_id, task, split = zip(*chunk)
+            contexts, all_gen_kwargs, doc_to_visual, doc_id, task, split, fs_docs = zip(*chunk)
             task = task[0]
             split = split[0]
-            batched_visuals = [doc_to_visual[0](self.task_dict[task][split][ids]) for ids in doc_id]  # [B, N]
-            flattened_visuals = self.flatten(batched_visuals)  # [B*N]
+            batched_query_visuals = [doc_to_visual[0](self.task_dict[task][split][ids]) for ids in doc_id]  # [B, N]
+            # flattened_visuals = self.flatten(batched_visuals)  # [B*N]
+            batched_fs_visuals = []
+            # for ids_list in fs_doc_ids:
+            #     fs_visuals = [doc_to_visual[0](self.task_dict[task][split][ids]) for ids in ids_list]
+            #     batched_fs_visuals.append(fs_visuals)
+            batched_fs_visuals = [[doc_to_visual[0](doc)[0] for doc in doc_list] for doc_list in fs_docs]
+
+            batched_visuals = [fs_v + q_v for fs_v, q_v in zip(batched_fs_visuals, batched_query_visuals)]
+            flattened_visuals = self.flatten(batched_visuals) # [B*(fs+1)]
             # we assume all gen kwargs in the batch are the same
             # this is safe to assume because the `grouper` object ensures it.
             gen_kwargs = all_gen_kwargs[0]
@@ -344,16 +352,20 @@ class Llava(lmms):
             question_input = []
 
             for visual, context in zip(batched_visuals, contexts):
-                if image_tensor is not None and len(image_tensor) != 0 and DEFAULT_IMAGE_TOKEN not in context:
+                if image_tensor is not None and len(image_tensor) != 0 and len(visual) != context.count(DEFAULT_IMAGE_TOKEN):
                     """
                     Three senarios:
                     1. No image, and there for, no image token should be added.
                     2. image token is already specified in the context, so we don't need to add it.
                     3. image token is not specified in the context and there is image inputs, so we need to add it. In this case, we add the image token at the beginning of the context and add a new line.
                     """
-                    image_tokens = [DEFAULT_IMAGE_TOKEN] * len(visual) if isinstance(visual, list) else [DEFAULT_IMAGE_TOKEN]
-                    image_tokens = " ".join(image_tokens)
-                    question = image_tokens + "\n" + context
+                    # image_tokens = [DEFAULT_IMAGE_TOKEN] * len(visual) if isinstance(visual, list) else [DEFAULT_IMAGE_TOKEN]
+                    # image_tokens = " ".join(image_tokens)
+                    # question = image_tokens + "\n" + context
+
+                    image_tokens = [DEFAULT_IMAGE_TOKEN] * (len(visual) - context.count('<image>')) if isinstance(visual, list) else [DEFAULT_IMAGE_TOKEN]
+                    context = context.replace('<image>', DEFAULT_IMAGE_TOKEN)
+                    question = context + "\n" + "\n".join(image_tokens)
                 else:
                     question = context
                 # This is much safer for llama3, as we now have some object type in it

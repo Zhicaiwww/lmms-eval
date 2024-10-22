@@ -6,7 +6,7 @@ class ContextSampler:
         self.task = task
         self.config = task._config
 
-        self.target_delimiter = self.config.target_delimiter
+        self.fewshot_target_delimiter = self.config.fewshot_target_delimiter
         self.fewshot_delimiter = self.config.fewshot_delimiter
 
         self.doc_to_text = self.task.doc_to_text
@@ -33,7 +33,7 @@ class ContextSampler:
                 [
                     # TODO: is separating doc_to_text and doc_to_target by one space always desired?
                     (self.doc_to_text(doc) if (self.config.doc_to_choice is None or type(self.doc_to_text(doc)) is str) else self.doc_to_choice(doc)[self.doc_to_text(doc)])
-                    + self.target_delimiter
+                    + self.fewshot_target_delimiter
                     + (
                         str(self.doc_to_target(doc)[0])
                         if type(self.doc_to_target(doc)) is list
@@ -47,7 +47,7 @@ class ContextSampler:
             + self.fewshot_delimiter
         )
 
-        return labeled_examples
+        return labeled_examples, selected_docs
 
     def sample(self, n):
         """

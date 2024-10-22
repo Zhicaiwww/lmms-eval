@@ -95,6 +95,7 @@ class TaskConfig(dict):
     use_prompt: str = None
     description: str = ""
     target_delimiter: str = " "
+    fewshot_target_delimiter = "\n<image>\n"
     fewshot_delimiter: str = "\n\n"
     fewshot_config: dict = None
     # runtime configuration options
@@ -439,7 +440,7 @@ class Task(abc.ABC):
             total=num_docs,
         ):
             # sample fewshot context #TODO: need to offset doc_id by rank now!
-            fewshot_ctx = self.fewshot_context(
+            fewshot_ctx, fewshot_docs = self.fewshot_context(
                 doc,
                 0 if self.config.num_fewshot is None else self.config.num_fewshot,
                 system_instruction,
@@ -453,7 +454,7 @@ class Task(abc.ABC):
             if self.config.metadata and type(self.config.metadata) == dict:  # TODO: temporary fix for metadata loading, ignore the list of dict type.
                 per_task_metadata.update(self.config.metadata)
 
-            inst = self.construct_requests(doc_id=doc_id, ctx=fewshot_ctx, metadata=per_task_metadata)
+            inst = self.construct_requests(doc_id=doc_id, ctx=fewshot_ctx, metadata=per_task_metadata, fs_docs=fewshot_docs)
 
             if not isinstance(inst, list):
                 inst = [inst]
@@ -1158,7 +1159,8 @@ class ConfigurableTask(Task):
             if apply_chat_template:
                 labeled_examples.extend(self.sampler.get_chat_context(doc, num_fewshot, fewshot_as_multiturn))
             else:
-                labeled_examples += self.sampler.get_context(doc, num_fewshot)
+                examples_context, examples_docs = self.sampler.get_context(doc, num_fewshot)
+                labeled_examples += examples_context
 
         example = self.doc_to_text(doc)
         if apply_chat_template:
@@ -1188,7 +1190,7 @@ class ConfigurableTask(Task):
             if self.multiple_input:
                 return labeled_examples
             if isinstance(example, str):
-                return labeled_examples + example
+                return labeled_examples + example, examples_docs
             elif isinstance(example, list):
                 return [labeled_examples + ex for ex in example]
             elif isinstance(example, int):
@@ -1347,7 +1349,7 @@ class ConfigurableTask(Task):
         else:
             raise TypeError
 
-    def construct_requests(self, doc_id: int, ctx: str, **kwargs) -> Union[List[Instance], Instance]:
+    def construct_requests(self, doc_id: int, ctx: str, fs_docs: Optional[bytes] = None, **kwargs) -> Union[List[Instance], Instance]:
         split = kwargs.get("metadata").get("split")
         # kwargs.pop("split")
         if self.OUTPUT_TYPE == "loglikelihood":
@@ -1396,7 +1398,7 @@ class ConfigurableTask(Task):
             return request_list
 
         elif self.OUTPUT_TYPE == "generate_until":
-            arguments = (ctx, copy.deepcopy(self.config.generation_kwargs), self.doc_to_visual, doc_id, self.config.task, split)
+            arguments = (ctx, copy.deepcopy(self.config.generation_kwargs), self.doc_to_visual, doc_id, self.config.task, split, fs_docs)
         elif self.OUTPUT_TYPE == "generate_until_multi_round":
             arguments = (ctx, copy.deepcopy(self.config.generation_kwargs), self.doc_to_visual, partial(self.config.doc_to_text, lmms_eval_specific_kwargs=self.lmms_eval_specific_kwargs), doc_id, self.config.task, split)
         return Instance(request_type=self.OUTPUT_TYPE, arguments=arguments, idx=0, **kwargs)
