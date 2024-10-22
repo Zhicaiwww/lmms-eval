@@ -17,8 +17,8 @@
 
 ## TODO
 
-1. template 调整需要添加通用参数适应后续 prompt engineer，目前 template 调整需要手动改写
-2. multi-GPU 多线程进行 fewshot 采样时是否需要设置 offset ??
+1. template优化：调整需要添加通用参数适应后续 prompt engineer，目前 template 调整需要手动改写
+2. 多线程采样：multi-GPU 多线程进行 fewshot 采样时是否需要设置 offset ??
 
 # template：
 
@@ -30,9 +30,10 @@ answer1/n/n
 question2/n
 <image2>/n
 answer2/n/n
+......
 
 question/n
-<image>/n
+<image>
 ```
 
 # Run Example
