@@ -2,12 +2,12 @@
 
 1. 增加 `pope_fs.yaml` 用于 fewshot 调试
 
-2. `sampler`: 返回 `fewshot doc` (直接传 doc 而非 doc_id 适应跨 split/dataset 检索 doc？)
+2. `sampler`: 返回 `fewshot doc` (直接传 `doc` 而非 `doc_id` 适应以后如何做跨 split/dataset 检索 doc？)
    - 如果需要跨 split/dataset 检索 doc 则给 `sampler` 添加采样参数 
 
 3. `fewshot_context`: 接受从 `sampler` 得到的 `fewshot doc`，并且传递给 `build_all_requests` 函数
 
-4. `build_all_requests`: 接受 fewshot doc，塞入 inst 的 arguments 用于后续构建 request
+4. `build_all_requests`: 接受 `fewshot doc`，塞入 `inst` 的 `arguments` 用于后续构建 `request`
 
 5. prompt 调整: `task` 增加 `fewshot_target_delimiter` 为 `/n<image>/n` 参数便于调整 template
 
