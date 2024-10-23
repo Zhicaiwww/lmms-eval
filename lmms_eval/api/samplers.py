@@ -57,6 +57,14 @@ class ContextSampler:
         return self.rnd.sample(self.docs, n)
 
 
+class PairwiseSampler(ContextSampler):
+    def sample(self, n, k) -> None:
+        """
+        Draw `n` pairs of samples from our fewshot docs.
+        """
+        pass
+
+
 class FirstNSampler(ContextSampler):
     def sample(self, n) -> None:
         """
@@ -86,6 +94,7 @@ class ManualSampler(ContextSampler):
 SAMPLER_REGISTRY = {
     "default": ContextSampler,
     "first_n": FirstNSampler,
+    "pairwise": PairwiseSampler,
 }
 
 

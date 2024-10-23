@@ -1,3 +1,20 @@
+# 重要的参数
+1. `--num_fewshot`: 采样 fewshot 的个数
+2. `--fewshot_split`: 采样 fewshot 的 split,
+   1. 如果不设置，会先从 `training_docs` 中采样，如果 `training_docs` 为空，则从 `test_docs` 中采样
+3. `--fewshot_config`: 采样 fewshot 的配置
+   1. `sampler`: 采样器，默认 `default`
+      1. `default`: 实例化 `ContextSampler`
+      2. `first_n`: 实例化 `FirstNSampler`，从 `fewshot_docs` 中返回固定的前 `n` 个
+      3. `pairwise`: 实例化 `PairwiseSampler`，从 `fewshot_docs` 中返回成对的样本、
+         1. 复用`doc_to_text` 和 `doc_to_visual` 函数
+            1.需要修改`fewshot_docs` 并与 `PairwiseSampler` 的 `sample` 函数相适配，采样输出仍为    `(labeled_examples, selected_docs)`
+         2. 不复用 `doc_to_text` 函数和 `doc_to_visual` 函数
+            1. 需要设置 `doc_to_choice` 参数
+   2. `samples`: 采样样本，可以设置多个样本，每个样本包含 `question` 和 `target`
+4. `--fewshot_target_delimiter`: 采样 fewshot 的 target 分隔符
+5. `--fewshot_delimiter`: 采样 fewshot 的 fewshot 分隔符
+
 # 修改列表
 
 1. 增加 `pope_fs.yaml` 用于 fewshot 调试
@@ -19,7 +36,8 @@
 
 1. template优化：调整需要添加通用参数适应后续 prompt engineer，目前 template 调整需要手动改写
 2. 多线程采样：multi-GPU 多线程进行 fewshot 采样时是否需要设置 offset ??
-
+3. `PairwiseSampler` 的 `get_context` 函数需要调整:
+   1. 
 # template：
 
 ```

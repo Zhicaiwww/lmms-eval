@@ -440,7 +440,7 @@ class Task(abc.ABC):
             total=num_docs,
         ):
             # sample fewshot context #TODO: need to offset doc_id by rank now!
-            fewshot_ctx, fewshot_docs = self.fewshot_context(
+            fewshot_ctx, fewshot_cur_docs = self.fewshot_context(
                 doc,
                 0 if self.config.num_fewshot is None else self.config.num_fewshot,
                 system_instruction,
@@ -454,7 +454,7 @@ class Task(abc.ABC):
             if self.config.metadata and type(self.config.metadata) == dict:  # TODO: temporary fix for metadata loading, ignore the list of dict type.
                 per_task_metadata.update(self.config.metadata)
 
-            inst = self.construct_requests(doc_id=doc_id, ctx=fewshot_ctx, metadata=per_task_metadata, fs_docs=fewshot_docs)
+            inst = self.construct_requests(doc_id=doc_id, ctx=fewshot_ctx, metadata=per_task_metadata, fs_docs=fewshot_cur_docs)
 
             if not isinstance(inst, list):
                 inst = [inst]
